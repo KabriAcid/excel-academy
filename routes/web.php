@@ -16,6 +16,9 @@ use App\Livewire\Admin\AdminGallery;
 use App\Livewire\Admin\Users;
 use App\Livewire\Admin\Settings;
 
+// Authentication Routes (Must be registered before other routes)
+require __DIR__ . '/auth.php';
+
 // Public Routes
 Route::get('/', Home::class)->name('home');
 Route::get('/about', About::class)->name('about');
@@ -46,7 +49,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('profile');
 });
 
-// Fallback for 404
+// Fallback for 404 (Must be last)
 Route::fallback(NotFound::class);
-
-require __DIR__ . '/auth.php';
