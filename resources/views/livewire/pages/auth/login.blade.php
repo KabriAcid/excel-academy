@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Forms\LoginForm;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
@@ -9,6 +10,7 @@ use Livewire\Volt\Component;
 new #[Layout('layouts.guest')] class extends Component
 {
     public LoginForm $form;
+    public bool $showPassword = false;
 
     /**
      * Handle an incoming authentication request.
@@ -21,37 +23,57 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        // Determine redirect based on user role after authentication
+        $redirectRoute = 'dashboard';
+
+        if (Auth::check()) {
+            $userRole = Auth::user()->role ?? 'user';
+            $redirectRoute = match ($userRole) {
+                'admin' => 'dashboard',
+                'parent' => 'dashboard',
+                'coach' => 'dashboard',
+                default => 'dashboard',
+            };
+        }
+
+        $this->redirectIntended(default: route($redirectRoute, absolute: false), navigate: true);
+    }
+
+    public function togglePasswordVisibility(): void
+    {
+        $this->showPassword = !$this->showPassword;
     }
 }; ?>
 
-<div class="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+<div class="bg-muted min-h-screen bg-background flex items-center justify-center px-4 py-12">
     <div class="w-full max-w-sm">
         <!-- Login Card -->
         <div class="animate-scale-in">
             <!-- Card Header -->
             <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold text-foreground mb-2">Admin Login</h1>
-                <p class="text-muted-foreground">Sign in to your account to continue</p>
+                <h3 class="text-4xl font-bold text-foreground mb-2">Sign In</h3>
+                <h3 class="text-base text-foreground text-gray-400 mb-2">Sign in to your account to continue</h3>
             </div>
 
             <!-- Card Body -->
-            <div class="bg-background border border-border rounded-lg shadow-premium p-8">
+            <div class="bg-background rounded-lg p-8">
                 <!-- Session Status -->
                 <x-auth-session-status class="mb-6" :status="session('status')" />
 
                 <form wire:submit="login" class="space-y-4">
-                    <!-- Email Address -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-foreground mb-2">
-                            Email Address
-                        </label>
+                    <!-- Email Address with Icon -->
+                    <div class="relative">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg class="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
                         <input
                             type="email"
                             wire:model="form.email"
                             id="email"
-                            placeholder="your@email.com"
-                            class="w-full px-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all bg-background"
+                            placeholder="Email address"
+                            class="w-full pl-10 pr-4 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all bg-background text-foreground placeholder-muted-foreground"
                             required
                             autofocus
                             autocomplete="email" />
@@ -60,19 +82,36 @@ new #[Layout('layouts.guest')] class extends Component
                         @enderror
                     </div>
 
-                    <!-- Password -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-foreground mb-2">
-                            Password
-                        </label>
+                    <!-- Password with Icon and Toggle -->
+                    <div class="relative">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <svg class="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
                         <input
-                            type="password"
+                            type="{{ $showPassword ? 'text' : 'password' }}"
                             wire:model="form.password"
                             id="password"
-                            placeholder="••••••••"
-                            class="w-full px-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all bg-background"
+                            placeholder="Password"
+                            class="w-full pl-10 pr-10 py-3 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all bg-background text-foreground placeholder-muted-foreground"
                             required
                             autocomplete="current-password" />
+                        <button
+                            type="button"
+                            wire:click="togglePasswordVisibility"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                            @if ($showPassword)
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            @else
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-2.629m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                            @endif
+                        </button>
                         @error('form.password')
                         <span class="text-destructive text-xs mt-1 block">{{ $message }}</span>
                         @enderror
@@ -100,54 +139,16 @@ new #[Layout('layouts.guest')] class extends Component
                     <!-- Submit Button -->
                     <button
                         type="submit"
-                        class="w-full px-6 py-3 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary/90 transition-all shadow-premium hover:shadow-premium-lg active:scale-95 transform duration-200">
+                        class="w-full px-6 py-3 rounded-lg text-sm font-semibold text-white bg-primary hover:bg-primary/90 transition-all shadow-premium hover:shadow-premium-lg active:scale-95 transform duration-200 mt-6">
                         Sign In
                     </button>
                 </form>
-
-                <!-- Divider -->
-                <div class="relative my-8">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-border"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-2 bg-background text-muted-foreground">or continue as</span>
-                    </div>
-                </div>
-
-                <!-- Student Enrollment Link -->
-                <div class="text-center">
-                    <p class="text-sm text-muted-foreground mb-3">Not an admin? Want to enroll a student?</p>
-                    <a
-                        href="{{ route('enrol') }}"
-                        wire:navigate
-                        class="inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-lg text-sm font-semibold text-primary border-2 border-primary hover:bg-muted transition-all">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        <span>Student Enrollment</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Card Footer -->
-            <div class="border-t border-border px-8 py-4 bg-muted/30">
-                <p class="text-xs text-muted-foreground text-center">
-                    Excel Football Academy © {{ now()->year }}
-                </p>
             </div>
         </div>
 
-        <!-- Security Notice -->
-        <div class="mt-6 p-4 rounded-lg bg-accent/5 border border-accent/20 animate-fade-in">
-            <div class="flex items-start space-x-3">
-                <svg class="h-5 w-5 text-accent mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0zM10 7a1 1 0 100-2 1 1 0 000 2zm3 1a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
-                </svg>
-                <p class="text-sm text-accent">
-                    Keep your credentials secure. Never share your password with anyone.
-                </p>
-            </div>
-        </div>
+        <!-- Footer Text -->
+        <p class="text-xs text-muted-foreground text-center mt-6">
+            Excel Football Academy © {{ now()->year }}
+        </p>
     </div>
 </div>
