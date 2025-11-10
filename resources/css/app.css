@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* EFA orange/blue loading bar */
+[x-cloak] {
+    display: none !important;
+}
+
+.htmx-request .htmx-indicator,
+[wire\:loading] {
+    background: linear-gradient(to right, #f97316, #1e40af) !important;
+}
