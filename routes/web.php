@@ -25,18 +25,7 @@ Route::get('/enrol', Register::class)->name('enrol');
 Route::get('/gallery', Gallery::class)->name('gallery');
 Route::get('/anthem', Anthem::class)->name('anthem');
 
-// Fallback for 404
-Route::fallback(NotFound::class);
-
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-Route::view('profile', 'profile')
-    ->middleware(['auth'])
-    ->name('profile');
-
-// Admin Routes
+// Admin Routes (Protected by auth + admin middleware)
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', DashboardHome::class)->name('dashboard');
     Route::get('/enrollments', Enrollments::class)->name('enrollments');
@@ -45,5 +34,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users', Users::class)->name('users');
     Route::get('/settings', Settings::class)->name('settings');
 });
+
+// User Routes (For non-admin authenticated users)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', function () {
+        return redirect()->route('home');
+    })->name('dashboard');
+
+    Route::get('/profile', function () {
+        return view('profile');
+    })->name('profile');
+});
+
+// Fallback for 404
+Route::fallback(NotFound::class);
 
 require __DIR__ . '/auth.php';

@@ -72,23 +72,27 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($recentEnrollments as $enrollment)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $enrollment->student_name }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $enrollment->program_type }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ $enrollment->created_at->format('M d, Y') }}
-                            </td>
-                        </tr>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $enrollment->student_name }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $enrollment->program_type }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {{ $enrollment->created_at->format('M d, Y') }}
+                                </td>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                No enrollments yet
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    No enrollments yet
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -112,23 +116,25 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($recentInquiries as $inquiry)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $inquiry->name }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <x-dashboard.status-badge :status="$inquiry->status" />
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ $inquiry->created_at->format('M d, Y') }}
-                            </td>
-                        </tr>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $inquiry->name }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <x-dashboard.status-badge :status="$inquiry->status" />
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {{ $inquiry->created_at->format('M d, Y') }}
+                                </td>
+                            </tr>
                         @empty
-                        <tr>
-                            <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                No inquiries yet
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    No inquiries yet
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -137,55 +143,62 @@
     </div>
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-        // Enrollments Line Chart
-        const enrollmentsCtx = document.getElementById('enrollmentsChart');
-        new Chart(enrollmentsCtx, {
-            type: 'line',
-            data: {
-                labels: @json($enrollmentsByMonth - > pluck('month')),
-                datasets: [{
-                    label: 'Enrollments',
-                    data: @json($enrollmentsByMonth - > pluck('count')),
-                    borderColor: 'hsl(217, 85%, 52%)',
-                    backgroundColor: 'hsla(217, 85%, 52%, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const enrollmentMonths = @json($enrollmentsByMonth->pluck('month'));
+                const enrollmentCounts = @json($enrollmentsByMonth->pluck('count'));
+                const inquiryLabels = @json($inquiryStatusCounts->pluck('status'));
+                const inquiryCounts = @json($inquiryStatusCounts->pluck('count'));
 
-        // Inquiry Status Pie Chart
-        const inquiryStatusCtx = document.getElementById('inquiryStatusChart');
-        new Chart(inquiryStatusCtx, {
-            type: 'pie',
-            data: {
-                labels: @json($inquiryStatusCounts - > pluck('status')),
-                datasets: [{
-                    data: @json($inquiryStatusCounts - > pluck('count')),
-                    backgroundColor: [
-                        'hsl(217, 85%, 52%)',
-                        'hsl(24, 90%, 50%)',
-                        'hsl(142, 71%, 45%)',
-                        'hsl(0, 84%, 60%)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
-        });
-    </script>
+                // Enrollments Line Chart
+                const enrollmentsCtx = document.getElementById('enrollmentsChart');
+                new Chart(enrollmentsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: enrollmentMonths,
+                        datasets: [{
+                            label: 'Enrollments',
+                            data: enrollmentCounts,
+                            borderColor: 'hsl(217, 85%, 52%)',
+                            backgroundColor: 'hsla(217, 85%, 52%, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+
+                // Inquiry Status Pie Chart
+                const inquiryStatusCtx = document.getElementById('inquiryStatusChart');
+                new Chart(inquiryStatusCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: inquiryLabels,
+                        datasets: [{
+                            data: inquiryCounts,
+                            backgroundColor: [
+                                'hsl(217, 85%, 52%)',
+                                'hsl(24, 90%, 50%)',
+                                'hsl(142, 71%, 45%)',
+                                'hsl(0, 84%, 60%)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            });
+        </script>
     @endpush
 </div>
